@@ -1,9 +1,8 @@
-import express from 'express';
-import fetch from 'node-fetch';
-import dotenv from 'dotenv';
-import { Buffer } from 'buffer';
+const express = require('express');
+const fetch = require('node-fetch');
+require('dotenv').config();
+const { Buffer } = require('buffer');
 
-dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -33,7 +32,10 @@ app.post('/get-token', async (req, res) => {
   }
 });
 
+app.get('/', (req, res) => {
+  res.send('Proxy is up! Use POST /get-token.');
+});
+
 app.listen(PORT, () => {
   console.log(`FatSecret proxy running on port ${PORT}`);
 });
-
