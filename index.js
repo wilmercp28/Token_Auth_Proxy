@@ -62,5 +62,18 @@ app.get('/search-foods', async (req, res) => {
       params: {
         search_expression: req.query.query,
         page_number: req.query.page || 0,
-        max_results: req.query.maxResults_
+        max_results: req.query.maxResults || 10,
+        format: 'json',
+      },
+    });
 
+    res.json(fatsecretRes.data);
+  } catch (err) {
+    console.error('Error searching foods:', err.message);
+    res.status(500).json({ error: 'Failed to fetch foods' });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`FatSecret proxy running on port ${PORT}`);
+});
