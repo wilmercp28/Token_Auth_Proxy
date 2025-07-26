@@ -235,6 +235,11 @@ app.get('/food-details', async (req, res) => {
   }
 });
 
+app.listen(PORT, () => {
+  console.log(`Proxy running securely on port ${PORT}`);
+});
+
+
 
 
 
