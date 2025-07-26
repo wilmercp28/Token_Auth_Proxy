@@ -43,13 +43,89 @@ async function getAccessToken() {
 }
 
 app.get('/search-foods', async (req, res) => {
-  const query = req.query.q;
-  if (!query) return res.status(400).json({ error: 'Missing search query (?q=)' });
+  const {
+    q,
+    page = 0,
+    max_results = 20,
+    include_sub_categories,
+    include_food_images,
+    include_food_attributes,
+    flag_default_serving,
+    region,
+    language,
+    format = 'json',
+  } = req.query;
+
+  if (!q) {
+    return res.status(400).json({ error: 'Missing search query (?q=)' });
+  }
 
   try {
     const token = await getAccessToken();
 
-    const fatsecretRes = await fetch(`https://platform.fatsecret.com/rest/server.api?method=foods.search&search_expression=${encodeURIComponent(query)}&format=json`, {
+    const params = new URLSearchParams({
+      method: 'foods.search.v3',
+      search_expression: q,
+      page_number: page.toString(),
+      max_results: max_results.toString(),
+      format,
+    });
+
+    if (include_sub_categories !== undefined)
+      params.set('include_sub_categories', include_sub_categories);
+    if (include_food_images !== undefined)
+      params.set('include_food_images', include_food_images);
+    if (include_food_attributes !== undefined)
+      params.set('include_food_attributes', include_food_attributes);
+    if (flag_default_serving !== undefined)
+      params.set('flag_default_serving', flag_default_serving);
+    if (region) params.set('region', region);
+    if (language) params.set('language', language);
+
+    const fatsecretRes = await fetch(
+      `https://platform.fatsecret.com/rest/server.api?${params.toString()}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const data = await fatsecretRes.json();
+    res.status(fatsecretRes.status).json(data);
+  } catch (err) {
+    console.error('FatSecret /search-foods error:', err);
+    res.status(500).json({ error: 'Internal error while searching foods' });
+  }
+});
+
+
+// /autocomplete-foods?q=chic&max_results=4
+app.get('/autocomplete-foods', async (req, res) => {
+  const {
+    q,
+    max_results = 4,
+    region,
+    format = 'json',
+  } = req.query;
+
+  if (!q) {
+    return res.status(400).json({ error: 'Missing query (?q=)' });
+  }
+
+  try {
+    const token = await getAccessToken();
+
+    const params = new URLSearchParams({
+      method: 'foods.autocomplete.v2',
+      expression: q,
+      max_results: max_results.toString(),
+      format,
+    });
+
+    if (region) params.set('region', region);
+
+    const fatsecretRes = await fetch(`https://platform.fatsecret.com/rest/server.api?${params.toString()}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -58,12 +134,107 @@ app.get('/search-foods', async (req, res) => {
     const data = await fatsecretRes.json();
     res.status(fatsecretRes.status).json(data);
   } catch (err) {
-    console.error('Proxy error:', err);
-    res.status(500).json({ error: 'Internal error while searching foods' });
+    console.error('Autocomplete error:', err);
+    res.status(500).json({ error: 'Internal error while autocompleting foods' });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Proxy running securely on port ${PORT}`);
+// /find-food-by-barcode?barcode=1234567890123&region=US&language=en
+app.get('/find-food-by-barcode', async (req, res) => {
+  const {
+    barcode,
+    region,
+    language,
+    format = 'json',
+  } = req.query;
+
+  if (!barcode || barcode.length !== 13) {
+    return res.status(400).json({ error: 'Missing or invalid 13-digit barcode (?barcode=)' });
+  }
+
+  try {
+    const token = await getAccessToken();
+
+    const params = new URLSearchParams({
+      method: 'food.find_id_for_barcode',
+      barcode,
+      format,
+    });
+
+    if (region) params.set('region', region);
+    if (language) params.set('language', language);
+
+    const fatsecretRes = await fetch(
+      `https://platform.fatsecret.com/rest/server.api?${params.toString()}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const data = await fatsecretRes.json();
+    res.status(fatsecretRes.status).json(data);
+  } catch (err) {
+    console.error('Barcode lookup error:', err);
+    res.status(500).json({ error: 'Internal error while finding food by barcode' });
+  }
 });
+
+app.get('/food-details', async (req, res) => {
+  const {
+    id,
+    format = 'json',
+    include_sub_categories,
+    include_food_images,
+    include_food_attributes,
+    flag_default_serving,
+    region,
+    language,
+  } = req.query;
+
+  if (!id) {
+    return res.status(400).json({ error: 'Missing food id (?id=)' });
+  }
+
+  try {
+    const token = await getAccessToken();
+
+    const params = new URLSearchParams({
+      method: 'food.get.v4',
+      food_id: id,
+      format,
+    });
+
+    if (include_sub_categories !== undefined)
+      params.set('include_sub_categories', include_sub_categories);
+    if (include_food_images !== undefined)
+      params.set('include_food_images', include_food_images);
+    if (include_food_attributes !== undefined)
+      params.set('include_food_attributes', include_food_attributes);
+    if (flag_default_serving !== undefined)
+      params.set('flag_default_serving', flag_default_serving);
+    if (region) params.set('region', region);
+    if (language) params.set('language', language);
+
+    const fatsecretRes = await fetch(
+      `https://platform.fatsecret.com/rest/server.api?${params.toString()}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const data = await fatsecretRes.json();
+    res.status(fatsecretRes.status).json(data);
+  } catch (err) {
+    console.error('Food details error:', err);
+    res.status(500).json({ error: 'Internal error while getting food details' });
+  }
+});
+
+
+
+
 
