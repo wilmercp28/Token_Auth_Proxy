@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: fatsecret-proxy
+    env: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: node index.js
+    envVars:
+      - key: CLIENT_ID
+        fromDotEnv: true
+      - key: CLIENT_SECRET
+        fromDotEnv: true
+      - key: OAUTH_URL
+        fromDotEnv: true
+      - key: SCOPE
+        fromDotEnv: true
