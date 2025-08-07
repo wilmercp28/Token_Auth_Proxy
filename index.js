@@ -22,7 +22,7 @@ if (!CLIENT_ID || !CLIENT_SECRET || !OAUTH_URL || !SCOPE) {
 let cachedToken = null;
 let tokenExpiresAt = 0;
 
-async function getAccessToken(): Promise<string> {
+async function getAccessToken() {
   const now = Date.now();
 
   if (cachedToken && now < tokenExpiresAt) return cachedToken;
@@ -52,10 +52,7 @@ async function getAccessToken(): Promise<string> {
   return cachedToken;
 }
 
-async function fatsecretRestRequest(
-  path: string,
-  query: Record<string, string | number | boolean | undefined> = {}
-) {
+async function fatsecretRestRequest(path, query = {}) {
   const token = await getAccessToken();
 
   const url = new URL(`https://platform.fatsecret.com/rest/${path}`);
@@ -460,9 +457,8 @@ app.post('/image-recognition', express.json({ limit: '2mb' }), async (req, res) 
 });
 
 app.listen(PORT, () => {
-  console.log(`✅ FatSecret Proxy running on port ${PORT}`);
+  console.log(` FatSecret Proxy running on port ${PORT}`);
 });
-
 
 
 
