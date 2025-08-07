@@ -19,7 +19,7 @@ if (!CLIENT_ID || !CLIENT_SECRET || !OAUTH_URL || !SCOPE) {
   throw new Error('Missing required environment variables');
 }
 
-let cachedToken: string | null = null;
+let cachedToken = null;
 let tokenExpiresAt = 0;
 
 async function getAccessToken(): Promise<string> {
